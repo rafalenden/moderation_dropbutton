@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter();
+ */
+function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
+  global $user;
+
+  $node = $form_state['node'];
+
+  // Check that revisioning is enabled for this content type.
+  if ($node->revision == FALSE) {
+    $actions =& $form['actions'];
+
+    // Adding new node.
+    if (empty($form['nid']['#value'])) {
+      $states = array(
+        'publish' => t('Save and publish'),
+        'unpublish' => t('Save as unpublished'),
+      );
+    }
+    // Node is unpublished.
+    elseif ($node->status == 0) {
+      $states = array(
+        'unpublish' => t('Save and keep unpublished'),
+        'publish' => t('Save and publish'),
+      );
+    }
+    // Node is published.
+    else {
+      $states = array(
+        'publish' => t('Save and keep published'),
+        'unpublish' => t('Save and unpublish'),
+      );
+    }
+
+    $items = array();
+    $label_machine_names = array();
+    foreach ($states as $machine_name => $state_label) {
+      $items[$machine_name] = array(
+        '#type' => 'submit',
+        '#value' => $state_label,
+        '#submit' => $actions['submit']['#submit'],
+        '#prefix' => '<li class="enable">',
+        "#suffix" => '</li>',
+      );
+      $label_machine_names[$state_label] = $machine_name;
+    }
+
+    $actions += moderation_dropbutton_prepare($items);
+
+    $form['#validate'][] = 'moderation_dropbutton_node_form_core_validate';
+    $form_state['moderation_dropbutton_list'] = $label_machine_names;
+    unset($actions['submit']);
+  }
+  // Is workbench enabled.
+  elseif (module_exists('workbench_moderation') && isset($form['workbench_moderation_state_current'])) {
+    $current_state = variable_get('workbench_moderation_default_state_' . $form['type']['#value'], workbench_moderation_state_none());
+    $state_machine_names = array_merge(array($current_state), array_keys(workbench_moderation_states_next($current_state, $user, $node)));
+
+    // If any state is defined, and this user have access to them.
+    if (count($state_machine_names)) {
+      $states = workbench_moderation_states();
+      $actions =& $form['actions'];
+
+      $label_machine_names = array();
+
+      foreach ($state_machine_names as $machine_name) {
+        $state_label = drupal_strtolower(check_plain($states[$machine_name]->label));
+        $button_label = t('Save and set state to @state', array('@state' => $state_label));
+
+        if ($machine_name == 'published') {
+          $button_label = t('Save and publish');
+        }
+        elseif ($machine_name == 'draft') {
+          $button_label = t('Save as draft');
+        }
+
+        $items[$machine_name] = array(
+          '#type' => 'submit',
+          '#value' => $button_label,
+          '#submit' => $actions['submit']['#submit'],
+          '#prefix' => '<li class="enable">',
+          "#suffix" => '</li>',
+          '#attributes' => array(
+            'title' => $states[$machine_name]->description,
+          ),
+        );
+
+        $label_machine_names[$button_label] = $machine_name;
+      }
+
+      $actions += moderation_dropbutton_prepare($items);
+
+      $form['#validate'][] = 'moderation_dropbutton_node_form_workbench_validate';
+      $form_state['moderation_dropbutton_list'] = $label_machine_names;
+      unset($actions['submit']);
+    }
+  }
+}
+
+/**
+ * Prepare dropbutton.
+ */
+function moderation_dropbutton_prepare($items) {
+  $ctools_path = drupal_get_path('module', 'ctools');
+  $module_path = drupal_get_path('module', 'moderation_dropbutton');
+
+  $element = array();
+
+  $element['states'] = array(
+    '#theme_wrappers' => array('container'),
+    '#attributes' => array('id' => 'edit-moderation-state'),
+    '#attached' => array(
+      'css' => array(
+        $ctools_path . '/css/dropbutton.css',
+        $ctools_path . '/css/button.css',
+        $module_path . '/css/moderation_dropbutton.css',
+      ),
+      'js' => array(
+        $ctools_path . '/js/dropbutton.js',
+      ),
+    ),
+  );
+
+  $themes = list_themes();
+  $theme = $themes[$GLOBALS['theme_key']];
+
+  $styles = file_scan_directory($module_path . '/css', '/.*\.css/');
+  foreach ($styles as $css) {
+    $theme_css = 'moderation_dropbutton.' . $theme->name . '.css';
+    $base_theme_css = !empty($theme->base_theme) ? 'moderation_dropbutton.' . $theme->base_theme . '.css' : NULL;
+
+    if ($css->filename == $theme_css) {
+      $element['states']['#attached']['css'][] = $module_path . '/css/' . $theme_css;
+    }
+    elseif ($css->filename == $base_theme_css) {
+      $element['states']['#attached']['css'][] = $module_path . '/css/' . $base_theme_css;
+    }
+  }
+
+  $prefix = '<div class="ctools-no-js ctools-button ctools-dropbutton"><div class="ctools-link"><a href="#" class="ctools-twisty ctools-text">open</a></div><div class="ctools-content"><ul class="horizontal right actions">';
+  $suffix = '</ul></div></div>';
+
+  $element['states']['actions'] = array(
+    '#prefix' => $prefix,
+    '#suffix' => $suffix,
+  );
+
+  $element['states']['actions'] += $items;
+
+  return $element;
+}
+
+/**
+ * Validation function for node_form() using core.
+ */
+function moderation_dropbutton_node_form_core_validate($form, &$form_state) {
+  $values =& $form_state['values'];
+  $button_list = $form_state['moderation_dropbutton_list'];
+  $submit_button_label = $values['op'];
+
+  if (isset($button_list[$submit_button_label])){
+    $values['status'] = $button_list[$submit_button_label] == 'publish' ? 1 : 0;
+  }
+}
+
+/**
+ * Validation function for node_form() using Workbench Moderation.
+ */
+function moderation_dropbutton_node_form_workbench_validate($form, &$form_state) {
+  $values =& $form_state['values'];
+  $button_list = $form_state['moderation_dropbutton_list'];
+  $submit_button_label = $values['op'];
+
+  if (isset($button_list[$submit_button_label])){
+    $values['workbench_moderation_state_new'] = $button_list[$submit_button_label];
+  }
+}

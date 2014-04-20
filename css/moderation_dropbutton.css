@@ -1,0 +1,27 @@
+#edit-moderation-state {
+  float: left;
+  margin-right: 15px;
+}
+
+#edit-moderation-state .actions {
+  padding: 0;
+}
+
+#edit-moderation-state .ctools-content {
+  padding: 0;
+}
+
+#edit-moderation-state input, #edit-moderation-state input:focus {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+#edit-moderation-state .ctools-dropbutton-processed.open li + li {
+  padding-top: 0;
+}
+
+/* Hide moderation states selectbox. */
+.form-item-workbench-moderation-state-new, form.node-form .form-item-status {
+  display: none;
+}

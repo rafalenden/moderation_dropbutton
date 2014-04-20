@@ -1,0 +1,4 @@
+name = Moderation Dropbutton
+description = Backport of Drupal 8 submit button for changing publications states of node.
+core = 7.x
+dependencies[] = ctools
