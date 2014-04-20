@@ -1,23 +1,23 @@
-#edit-moderation-state {
+#moderation-dropbutton {
   float: left;
   margin-right: 15px;
 }
 
-#edit-moderation-state .actions {
+#moderation-dropbutton .actions {
   padding: 0;
 }
 
-#edit-moderation-state .ctools-content {
+#moderation-dropbutton .ctools-content {
   padding: 0;
 }
 
-#edit-moderation-state input, #edit-moderation-state input:focus {
+#moderation-dropbutton input, #moderation-dropbutton input:focus {
   width: 100%;
   margin: 0;
   text-align: left;
 }
 
-#edit-moderation-state .ctools-dropbutton-processed.open li + li {
+#moderation-dropbutton .ctools-dropbutton-processed.open li + li {
   padding-top: 0;
 }
 

@@ -110,7 +110,7 @@ function moderation_dropbutton_prepare($items) {
 
   $element['states'] = array(
     '#theme_wrappers' => array('container'),
-    '#attributes' => array('id' => 'edit-moderation-state'),
+    '#attributes' => array('id' => 'moderation-dropbutton'),
     '#attached' => array(
       'css' => array(
         $ctools_path . '/css/dropbutton.css',
