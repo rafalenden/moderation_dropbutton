@@ -8,8 +8,51 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
   $node = $form_state['node'];
 
-  // Check that revisioning is enabled for this content type.
-  if ($node->revision == FALSE) {
+  // Is workbench enabled.
+  if (module_exists('workbench_moderation') && isset($form['workbench_moderation_state_current'])) {
+    $current_state = variable_get('workbench_moderation_default_state_' . $form['type']['#value'], workbench_moderation_state_none());
+    $state_machine_names = array_merge(array($current_state), array_keys(workbench_moderation_states_next($current_state, $user, $node)));
+
+    // If any state is defined, and this user have access to them.
+    if (count($state_machine_names)) {
+      $states = workbench_moderation_states();
+      $actions =& $form['actions'];
+
+      $label_machine_names = array();
+
+      foreach ($state_machine_names as $machine_name) {
+        $state_label = drupal_strtolower(check_plain($states[$machine_name]->label));
+        $button_label = t('Save and set state to @state', array('@state' => $state_label));
+
+        if ($machine_name == 'published') {
+          $button_label = t('Save and publish');
+        }
+        elseif ($machine_name == 'draft') {
+          $button_label = t('Save as draft');
+        }
+
+        $items[$machine_name] = array(
+          '#type' => 'submit',
+          '#value' => $button_label,
+          '#submit' => $actions['submit']['#submit'],
+          '#prefix' => '<li class="enable">',
+          "#suffix" => '</li>',
+          '#attributes' => array(
+            'title' => $states[$machine_name]->description,
+          ),
+        );
+
+        $label_machine_names[$button_label] = $machine_name;
+      }
+
+      $actions += moderation_dropbutton_prepare($items);
+
+      $form['#validate'][] = 'moderation_dropbutton_node_form_workbench_validate';
+      $form_state['moderation_dropbutton_list'] = $label_machine_names;
+      unset($actions['submit']);
+    }
+  }
+  else {
     $actions =& $form['actions'];
 
     // Adding new node.
@@ -52,50 +95,6 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
     $form['#validate'][] = 'moderation_dropbutton_node_form_core_validate';
     $form_state['moderation_dropbutton_list'] = $label_machine_names;
     unset($actions['submit']);
-  }
-  // Is workbench enabled.
-  elseif (module_exists('workbench_moderation') && isset($form['workbench_moderation_state_current'])) {
-    $current_state = variable_get('workbench_moderation_default_state_' . $form['type']['#value'], workbench_moderation_state_none());
-    $state_machine_names = array_merge(array($current_state), array_keys(workbench_moderation_states_next($current_state, $user, $node)));
-
-    // If any state is defined, and this user have access to them.
-    if (count($state_machine_names)) {
-      $states = workbench_moderation_states();
-      $actions =& $form['actions'];
-
-      $label_machine_names = array();
-
-      foreach ($state_machine_names as $machine_name) {
-        $state_label = drupal_strtolower(check_plain($states[$machine_name]->label));
-        $button_label = t('Save and set state to @state', array('@state' => $state_label));
-
-        if ($machine_name == 'published') {
-          $button_label = t('Save and publish');
-        }
-        elseif ($machine_name == 'draft') {
-          $button_label = t('Save as draft');
-        }
-
-        $items[$machine_name] = array(
-          '#type' => 'submit',
-          '#value' => $button_label,
-          '#submit' => $actions['submit']['#submit'],
-          '#prefix' => '<li class="enable">',
-          "#suffix" => '</li>',
-          '#attributes' => array(
-            'title' => $states[$machine_name]->description,
-          ),
-        );
-
-        $label_machine_names[$button_label] = $machine_name;
-      }
-
-      $actions += moderation_dropbutton_prepare($items);
-
-      $form['#validate'][] = 'moderation_dropbutton_node_form_workbench_validate';
-      $form_state['moderation_dropbutton_list'] = $label_machine_names;
-      unset($actions['submit']);
-    }
   }
 }
 
