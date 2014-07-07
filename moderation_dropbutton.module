@@ -8,23 +8,28 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
   $node = $form_state['node'];
 
-  // Is workbench enabled.
-  if (module_exists('workbench_moderation') && isset($form['workbench_moderation_state_current'])) {
-    $current_state = variable_get('workbench_moderation_default_state_' . $form['type']['#value'], workbench_moderation_state_none());
-    $state_machine_names = array_merge(array($current_state), array_keys(workbench_moderation_states_next($current_state, $user, $node)));
+  // Is workbench moderation enabled for edited content type.
+  if (module_exists('workbench_moderation') && workbench_moderation_node_type_moderated($node->type)) {
+    // Set a moderation state even if there is not one defined
+    if (isset($node->workbench_moderation['current']->state)) {
+      $moderation_state = $node->workbench_moderation['current']->state;
+    }
+    else {
+      $moderation_state = variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
+    }
 
-    // If any state is defined, and this user have access to them.
-    if (count($state_machine_names)) {
+    if ($states = workbench_moderation_states_next($moderation_state, NULL, $node)) {
+      $current = array($moderation_state => workbench_moderation_state_label($moderation_state));
+      $states = array_merge($current, $states);
+
       // Hide moderation state dropdown.
       $form['options']['workbench_moderation_state_new']['#access'] = FALSE;
 
-      $states = workbench_moderation_states();
       $actions = &$form['actions'];
       $label_machine_names = array();
 
-      foreach ($state_machine_names as $machine_name) {
-        $state_label = drupal_strtolower(check_plain($states[$machine_name]->label));
-        $button_label = t('Save and set state to @state', array('@state' => $state_label));
+      foreach ($states as $machine_name => $state_label) {
+        $button_label = t('Save and set state to @state', array('@state' => strtolower($state_label)));
 
         if ($machine_name == 'published') {
           $button_label = t('Save and publish');
@@ -39,9 +44,6 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
           '#submit' => $actions['submit']['#submit'],
           '#prefix' => '<li class="enable">',
           "#suffix" => '</li>',
-          '#attributes' => array(
-            'title' => $states[$machine_name]->description,
-          ),
         );
 
         $label_machine_names[$button_label] = $machine_name;
