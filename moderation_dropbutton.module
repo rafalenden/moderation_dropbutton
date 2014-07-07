@@ -15,9 +15,11 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
     // If any state is defined, and this user have access to them.
     if (count($state_machine_names)) {
-      $states = workbench_moderation_states();
-      $actions =& $form['actions'];
+      // Hide moderation state dropdown.
+      $form['options']['workbench_moderation_state_new']['#access'] = FALSE;
 
+      $states = workbench_moderation_states();
+      $actions = &$form['actions'];
       $label_machine_names = array();
 
       foreach ($state_machine_names as $machine_name) {

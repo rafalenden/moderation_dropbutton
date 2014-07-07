@@ -20,8 +20,3 @@
 #moderation-dropbutton .ctools-dropbutton-processed.open li + li {
   padding-top: 0;
 }
-
-/* Hide moderation states selectbox. */
-.form-item-workbench-moderation-state-new, form.node-form .form-item-status {
-  display: none;
-}
