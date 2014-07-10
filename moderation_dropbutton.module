@@ -102,6 +102,8 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
     $form_state['moderation_dropbutton_list'] = $label_machine_names;
     unset($actions['submit']);
   }
+
+  $form['#validate'][] = 'moderation_dropbutton_node_form_validate';
 }
 
 /**
@@ -165,7 +167,7 @@ function moderation_dropbutton_node_form_core_validate($form, &$form_state) {
   $button_list = $form_state['moderation_dropbutton_list'];
   $submit_button_label = $values['op'];
 
-  if (isset($button_list[$submit_button_label])){
+  if (isset($button_list[$submit_button_label])) {
     $values['status'] = $button_list[$submit_button_label] == 'publish' ? 1 : 0;
   }
 }
@@ -174,6 +176,20 @@ function moderation_dropbutton_node_form_core_validate($form, &$form_state) {
  * Validation function for node_form() using Workbench Moderation.
  */
 function moderation_dropbutton_node_form_workbench_validate(&$form, &$form_state) {
+  $values = &$form_state['values'];
+  $button_list = $form_state['moderation_dropbutton_list'];
+  $submit_button_label = $values['op'];
+
+  if (isset($button_list[$submit_button_label])) {
+    $values['workbench_moderation_state_new'] = $button_list[$submit_button_label];
+  }
+}
+
+
+/**
+ * Validation function for node_form().
+ */
+function moderation_dropbutton_node_form_validate(&$form, &$form_state) {
   $values = &$form_state['values'];
   $button_list = $form_state['moderation_dropbutton_list'];
   $submit_button_label = $values['op'];
@@ -188,7 +204,5 @@ function moderation_dropbutton_node_form_workbench_validate(&$form, &$form_state
       $actions = array($state => $actions[$state]) + $actions;
       $form_state['rebuild'] = TRUE;
     }
-
-    $values['workbench_moderation_state_new'] = $state;
   }
 }
