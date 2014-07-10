@@ -8,7 +8,7 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
   $node = $form_state['node'];
 
-  // Is workbench moderation enabled for edited content type.
+  // If workbench moderation is enabled use it for publication states.
   if (module_exists('workbench_moderation') && workbench_moderation_node_type_moderated($node->type)) {
     // Set a moderation state even if there is not one defined
     if (isset($node->workbench_moderation['current']->state)) {
@@ -18,6 +18,7 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
       $moderation_state = variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
     }
 
+    // There is more than one state available to chose.
     if ($states = workbench_moderation_states_next($moderation_state, NULL, $node)) {
       $current = array($moderation_state => workbench_moderation_state_label($moderation_state));
       $states = array_merge($current, $states);
@@ -56,8 +57,9 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
       unset($actions['submit']);
     }
   }
+  // Use Drupal core publication states.
   else {
-    $actions =& $form['actions'];
+    $actions = &$form['actions'];
 
     // Adding new node.
     if (empty($form['nid']['#value'])) {
@@ -159,7 +161,7 @@ function moderation_dropbutton_prepare($items) {
  * Validation function for node_form() using core.
  */
 function moderation_dropbutton_node_form_core_validate($form, &$form_state) {
-  $values =& $form_state['values'];
+  $values = &$form_state['values'];
   $button_list = $form_state['moderation_dropbutton_list'];
   $submit_button_label = $values['op'];
 
@@ -171,12 +173,19 @@ function moderation_dropbutton_node_form_core_validate($form, &$form_state) {
 /**
  * Validation function for node_form() using Workbench Moderation.
  */
-function moderation_dropbutton_node_form_workbench_validate($form, &$form_state) {
-  $values =& $form_state['values'];
+function moderation_dropbutton_node_form_workbench_validate(&$form, &$form_state) {
+  $values = &$form_state['values'];
   $button_list = $form_state['moderation_dropbutton_list'];
   $submit_button_label = $values['op'];
 
-  if (isset($button_list[$submit_button_label])){
-    $values['workbench_moderation_state_new'] = $button_list[$submit_button_label];
+  if (isset($button_list[$submit_button_label])) {
+    $state = $button_list[$submit_button_label];
+
+    // Move selected button to top.
+    $actions = &$form['actions']['states']['actions'];
+    $actions = array($state => $actions[$state]) + $actions;
+
+    $values['workbench_moderation_state_new'] = $state;
+    $form_state['rebuild'] = TRUE;
   }
 }
