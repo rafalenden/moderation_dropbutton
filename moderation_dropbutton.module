@@ -181,11 +181,14 @@ function moderation_dropbutton_node_form_workbench_validate(&$form, &$form_state
   if (isset($button_list[$submit_button_label])) {
     $state = $button_list[$submit_button_label];
 
-    // Move selected button to top.
-    $actions = &$form['actions']['states']['actions'];
-    $actions = array($state => $actions[$state]) + $actions;
+    // Rebuild form only when any error occurred, otherwise for will not redirect after saving.
+    if (form_get_errors()) {
+      // Move selected button to top.
+      $actions = &$form['actions']['states']['actions'];
+      $actions = array($state => $actions[$state]) + $actions;
+      $form_state['rebuild'] = TRUE;
+    }
 
     $values['workbench_moderation_state_new'] = $state;
-    $form_state['rebuild'] = TRUE;
   }
 }
