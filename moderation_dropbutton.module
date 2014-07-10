@@ -73,7 +73,7 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
       // If default status for node type is unpublished make that option default.
       $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-      if (!in_array('published', $node_options)) {
+      if (!in_array('status', $node_options)) {
         $states = array('unpublish' => $states['unpublish']) + $states;
       }
     }
