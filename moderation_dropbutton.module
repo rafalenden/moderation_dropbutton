@@ -59,6 +59,9 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
   }
   // Use Drupal core publication states.
   else {
+    // Hide "Published" checkbox.
+    $form['options']['status']['#access'] = FALSE;
+
     $actions = &$form['actions'];
 
     // Adding new node.
@@ -67,9 +70,15 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
         'publish' => t('Save and publish'),
         'unpublish' => t('Save as unpublished'),
       );
+
+      // If default status for node type is unpublished make that option default.
+      $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+      if (!in_array('published', $node_options)) {
+        $states = array('unpublish' => $states['unpublish']) + $states;
+      }
     }
     // Node is unpublished.
-    elseif ($node->status == 0) {
+    elseif ($node->status == NODE_NOT_PUBLISHED) {
       $states = array(
         'unpublish' => t('Save and keep unpublished'),
         'publish' => t('Save and publish'),
@@ -190,9 +199,8 @@ function moderation_dropbutton_node_form_workbench_validate(&$form, &$form_state
  * Validation function for node_form().
  */
 function moderation_dropbutton_node_form_validate(&$form, &$form_state) {
-  $values = &$form_state['values'];
   $button_list = $form_state['moderation_dropbutton_list'];
-  $submit_button_label = $values['op'];
+  $submit_button_label = $form_state['values']['op'];
 
   if (isset($button_list[$submit_button_label])) {
     $state = $button_list[$submit_button_label];
