@@ -34,14 +34,15 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
       $actions = &$form['actions'];
       $label_machine_names = array();
+      $items = array();
 
       foreach ($states as $machine_name => $state_label) {
         $button_label = t('Save and set state to @state', array('@state' => strtolower($state_label)));
 
-        if ($machine_name == 'published') {
+        if ($machine_name == workbench_moderation_state_published()) {
           $button_label = t('Save and publish');
         }
-        elseif ($machine_name == 'draft') {
+        elseif ($machine_name == workbench_moderation_state_none()) {
           $button_label = t('Save as draft');
         }
 
