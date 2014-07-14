@@ -18,6 +18,12 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
       $moderation_state = variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
     }
 
+    // We have a use case where a live node is being edited. This will always
+    // revert back to the original node status.
+    if ($moderation_state == workbench_moderation_state_published()) {
+      $moderation_state = workbench_moderation_state_none();
+    }
+
     // There is more than one state available to chose.
     if ($states = workbench_moderation_states_next($moderation_state, NULL, $node)) {
       $current = array($moderation_state => workbench_moderation_state_label($moderation_state));
