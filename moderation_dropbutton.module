@@ -66,7 +66,7 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
   // Use Drupal core publication states.
   else {
     // Hide "Published" checkbox.
-    $form['options']['status']['#access'] = FALSE;
+    $form['options']['status']['#disabled'] = TRUE;
 
     $actions = &$form['actions'];
 
