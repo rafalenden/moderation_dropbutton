@@ -8,6 +8,18 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
 
   $node = $form_state['node'];
 
+  if (!empty($form['submit'])) {
+    $submit_element = &$form['submit'];
+  }
+  elseif (!empty($form['actions']['submit'])) {
+    $submit_element = &$form['actions']['submit'];
+  }
+  else {
+    return;
+  }
+
+  $submit_element['#weight'] = NULL;
+
   // If workbench moderation is enabled use it for publication states.
   if (module_exists('workbench_moderation') && workbench_moderation_node_type_moderated($node->type)) {
     // Set a moderation state even if there is not one defined
@@ -47,12 +59,10 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
         }
 
         $items[$machine_name] = array(
-          '#type' => 'submit',
-          '#value' => $button_label,
-          '#submit' => $actions['submit']['#submit'],
-          '#prefix' => '<li class="enable">',
-          "#suffix" => '</li>',
-        );
+            '#value' => $button_label,
+            '#prefix' => '<li class="enable">',
+            "#suffix" => '</li>',
+          ) + $submit_element;
 
         $label_machine_names[$button_label] = $machine_name;
       }
@@ -102,12 +112,10 @@ function moderation_dropbutton_form_node_form_alter(&$form, &$form_state, $id) {
     $label_machine_names = array();
     foreach ($states as $machine_name => $state_label) {
       $items[$machine_name] = array(
-        '#type' => 'submit',
-        '#value' => $state_label,
-        '#submit' => $actions['submit']['#submit'],
-        '#prefix' => '<li class="enable">',
-        "#suffix" => '</li>',
-      );
+          '#value' => $state_label,
+          '#prefix' => '<li class="enable">',
+          "#suffix" => '</li>',
+        ) + $submit_element;
       $label_machine_names[$state_label] = $machine_name;
     }
 
