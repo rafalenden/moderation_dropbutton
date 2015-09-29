@@ -216,12 +216,14 @@ function moderation_dropbutton_node_validate($node, &$form, &$form_state) {
  */
 
 function moderation_dropbutton_node_form_validate(&$form, &$form_state) {
+  $values = &$form_state['values'];
   $button_list = $form_state['moderation_dropbutton_list'];
   $submit_button_label = isset($values['op']) ? $values['op'] : '';
 
   if (isset($button_list[$submit_button_label])) {
     $state = $button_list[$submit_button_label];
     // Check if validation failed.
+
     if (form_get_errors()) {
       // Move selected button to top.
       $actions = &$form['actions']['states']['actions'];
