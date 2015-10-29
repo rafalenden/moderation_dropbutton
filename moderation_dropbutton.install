@@ -10,3 +10,12 @@ function moderation_dropbutton_install() {
     ->condition('name', 'moderation_dropbutton')
     ->execute();
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function moderation_dropbutton_uninstall() {
+  db_delete('variable')
+    ->condition('name', db_like('moderation_dropbutton_') . '%', 'LIKE')
+    ->execute();
+}
